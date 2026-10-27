@@ -1,0 +1,2 @@
+# E1 baseline: no PII plugin at all. The model sees raw emails, phones, addresses and card numbers.
+[]

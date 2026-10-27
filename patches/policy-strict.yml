@@ -1,0 +1,10 @@
+# Strict: refunds above askAbove need a human approval; above hardCap they are never automatic.
+- insert:
+    - id: shop-policy
+      name: '__ROOT__/plugins/shop-policy/index.js'
+      config:
+        mode: strict
+        askAbove: 20
+        hardCap: 500
+        dataFile: '__ROOT__/data/shop.json'
+        auditFile: '__ROOT__/.runs/audit.jsonl'

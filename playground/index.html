@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ShopOps playground</title>
+<style>
+  :root{--navy:#00233c;--orange:#ff5f02;--blue:#3053f4;--gray:#f0f3f5;--border:#ccd3d8;color-scheme:light dark}
+  @media (prefers-color-scheme:dark){:root{--navy:#e8eef3;--gray:#10222f;--border:#2b4254}body{background:#0a1822}}
+  *{box-sizing:border-box}
+  body{font:15px/1.5 Inter,system-ui,sans-serif;color:var(--navy);margin:0;padding:24px;max-width:1180px;margin-inline:auto}
+  h1{font-weight:300;font-size:32px;margin:0 0 4px} h2{font-weight:300;font-size:22px;margin:0 0 8px}
+  .sub{color:var(--navy);opacity:.7;margin-bottom:20px}
+  .bar{display:flex;gap:16px;flex-wrap:wrap;align-items:end;margin-bottom:16px}
+  label{display:flex;flex-direction:column;font-size:13px;gap:4px}
+  select,input,textarea{font:inherit;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:transparent;color:inherit}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--border);border-radius:10px;padding:14px}
+  pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--gray);padding:10px;border-radius:8px;min-height:120px}
+  .tag{color:var(--blue);font-weight:600} .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;margin:2px 4px 2px 0;border:1px solid var(--border)}
+  .bad{background:#ff5f02;color:#fff;border-color:#ff5f02} .good{background:#04ce7e;color:#00233c;border-color:#04ce7e}
+  .row{margin:16px 0} .note{font-size:13px;opacity:.75}
+  .decision{font-size:18px;font-weight:600;margin:6px 0}
+  button{font:inherit;font-weight:600;padding:8px 16px;border-radius:12px;border:0;background:var(--blue);color:#fff;cursor:pointer}
+</style></head><body>
+<h1>ShopOps playground</h1>
+<div class="sub">Change one setting, predict, then look. Same code the dsh plugins run. Synthetic data only, no model involved.</div>
+
+<h2>1. What would the model receive?</h2>
+<div class="bar">
+  <label>Order <select id="order"></select></label>
+  <label>PII mode <select id="mode"><option>off</option><option selected>regex</option><option>dictionary</option></select></label>
+  <span id="leaks"></span>
+</div>
+<div class="grid">
+  <div class="card"><b>get_customer result</b> <span class="note">as the model receives it</span><pre id="cust"></pre></div>
+  <div class="card"><b>lookup_order result</b> <span class="note">notes field is customer data, not instructions</span><pre id="ord"></pre></div>
+</div>
+<div class="row card"><b>Try your own text</b> <span class="note">paste an email, a card number, a name from the table above</span>
+  <textarea id="free" rows="2" style="width:100%;margin:8px 0">Please call Priya Moretti on +1-555-010-0110 or write to priya.moretti@example.com, card 4111 1111 1111 1111.</textarea>
+  <pre id="freeout" style="min-height:48px"></pre></div>
+
+<h2 style="margin-top:28px">2. What would the refund policy decide?</h2>
+<div class="bar">
+  <label>Policy <select id="pmode"><option>off</option><option selected>lenient</option><option>strict</option></select></label>
+  <label>SKU <select id="sku"></select></label>
+  <label>Amount ($) <input id="amount" type="number" step="0.01" value="24.5" style="width:110px"></label>
+  <button id="go">Decide</button>
+</div>
+<div class="card"><div class="decision" id="dec">Pick an order, then press Decide.</div><div id="elig" class="note"></div></div>
+<p class="note">lenient: eligible refunds up to $200. strict: above $50 needs a human approval, above $500 never automatic. In a headless run an approval with nobody to answer is denied.</p>
+
+<script>
+const $ = id => document.getElementById(id)
+const post = (u, b) => fetch(u, { method: 'POST', body: JSON.stringify(b) }).then(r => r.json())
+const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
+const mark = s => esc(s).replace(/\[\[([A-Z]+_[0-9a-f]{8})\]\]/g, '<span class="tag">[[$1]]</span>')
+let current = null
+
+async function refresh() {
+  const id = $('order').value
+  current = await (await fetch('/api/order?id=' + id)).json()
+  const sku = $('sku'); sku.innerHTML = current.items.map(i => `<option>${i.sku}</option>`).join('')
+  const o = JSON.parse(current.order)
+  $('amount').value = o.total
+  const mode = $('mode').value
+  const [c, ord] = await Promise.all([post('/api/redact', { mode, text: current.customer }), post('/api/redact', { mode, text: current.order })])
+  $('cust').innerHTML = mark(c.text); $('ord').innerHTML = mark(ord.text)
+  const all = [...new Set([...c.leaks, ...ord.leaks])]
+  $('leaks').innerHTML = all.length ? 'Still visible: ' + all.map(l => `<span class="pill bad">${l}</span>`).join('') : '<span class="pill good">no PII visible</span>'
+  freeRun()
+}
+async function freeRun() {
+  const r = await post('/api/redact', { mode: $('mode').value, text: $('free').value })
+  $('freeout').innerHTML = mark(r.text) + (r.leaks.length ? '<br><br>Still visible: ' + r.leaks.map(l => `<span class="pill bad">${l}</span>`).join('') : '')
+}
+async function decide() {
+  const o = JSON.parse(current.order)
+  const r = await post('/api/policy', { mode: $('pmode').value, order_id: o.order_id, sku: $('sku').value, amount: $('amount').value })
+  const k = r.decision.kind
+  $('dec').innerHTML = `<span class="pill ${k === 'allow' ? 'good' : 'bad'}">${k.toUpperCase()}</span> ${esc(r.decision.reason ?? 'refund runs')}`
+  $('elig').textContent = `Eligibility: ${r.eligibility.eligible ? 'eligible' : 'not eligible'} (${r.eligibility.rule_ids.join(', ')}). ${r.eligibility.explanation}`
+}
+fetch('/api/orders').then(r => r.json()).then(list => {
+  $('order').innerHTML = list.map(o => `<option value="${o.order_id}">${o.order_id} - ${o.status} - $${o.total}${o.note ? ' - ' + o.note : ''}</option>`).join('')
+  refresh()
+})
+$('order').onchange = refresh; $('mode').onchange = refresh; $('free').oninput = freeRun; $('go').onclick = decide
+</script></body></html>

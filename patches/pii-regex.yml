@@ -1,0 +1,8 @@
+# PII masking mode: regex
+- insert:
+    - id: shop-pii
+      name: '__ROOT__/plugins/shop-pii/index.js'
+      config:
+        mode: regex
+        dataFile: '__ROOT__/data/shop.json'
+        auditFile: '__ROOT__/.runs/audit.jsonl'

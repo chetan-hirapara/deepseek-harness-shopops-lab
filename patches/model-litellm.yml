@@ -1,0 +1,22 @@
+# Any OpenAI-compatible gateway, for example a Teradata LiteLLM proxy.
+# Set TD_LITELLM_BASE_URL (ending in /v1), TD_LITELLM_KEY and TD_LITELLM_MODEL (a model_name from the proxy's model_list).
+# Send ONLY the synthetic lab data through a shared gateway.
+- id: llm-pi-ai
+  config:
+    providers:
+      td-litellm:
+        displayName: LiteLLM gateway
+        apiKeyEnv: TD_LITELLM_KEY
+        api: openai-completions
+        baseURL: __TD_LITELLM_BASE_URL__
+        compat:
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: __TD_LITELLM_MODEL__
+            contextWindow: 128000
+            maxTokens: 8192
+- id: agent-default-model
+  config:
+    provider: td-litellm
+    model: __TD_LITELLM_MODEL__

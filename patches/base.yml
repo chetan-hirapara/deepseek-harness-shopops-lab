@@ -1,0 +1,11 @@
+# Always loaded: the six ShopOps tools and the audit trail.
+# __ROOT__ is replaced with this folder's absolute path by lab.mjs (plugin paths must be absolute).
+- insert:
+    - id: shop-tools
+      name: '__ROOT__/plugins/shop-tools/index.js'
+      config:
+        dataFile: '__ROOT__/data/shop.json'
+    - id: shop-audit
+      name: '__ROOT__/plugins/shop-audit/index.js'
+      config:
+        auditFile: '__ROOT__/.runs/audit.jsonl'

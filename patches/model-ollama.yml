@@ -1,0 +1,21 @@
+# Free, local, offline. Small models are weak at tool calling, which is exactly what experiment E6 shows.
+# Run `ollama pull <model>` first. Set OLLAMA_MODEL (default llama3.1).
+- id: llm-pi-ai
+  config:
+    providers:
+      ollama:
+        displayName: Ollama (local)
+        apiKeyEnv: OLLAMA_API_KEY
+        api: openai-completions
+        baseURL: http://127.0.0.1:11434/v1
+        compat:
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: __OLLAMA_MODEL__
+            contextWindow: 32768
+            maxTokens: 4096
+- id: agent-default-model
+  config:
+    provider: ollama
+    model: __OLLAMA_MODEL__

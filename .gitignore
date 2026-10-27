@@ -1,0 +1,15 @@
+node_modules/
+.dsh-home/
+.generated/
+.runs/
+data/shop.json
+results/
+
+# Secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,6 @@
+# DeepSeek's own API. dsh's default model is already DeepSeek, so this only pins it.
+# Export DEEPSEEK_API_KEY first (headless reads env vars; keys saved in the Web UI are not used by headless).
+- id: agent-default-model
+  config:
+    provider: deepseek-official
+    model: deepseek-flash

@@ -1,0 +1,20 @@
+# Scripted offline model (mock-llm/server.mjs). No key, same behaviour for everyone.
+- id: llm-pi-ai
+  config:
+    providers:
+      shopops-mock:
+        displayName: ShopOps mock model
+        apiKeyEnv: SHOPOPS_MOCK_KEY
+        api: openai-completions
+        baseURL: http://127.0.0.1:__MOCK_PORT__/v1
+        compat:
+          supportsDeveloperRole: false
+          maxTokensField: max_tokens
+        models:
+          - id: shopops-mock
+            contextWindow: 128000
+            maxTokens: 4096
+- id: agent-default-model
+  config:
+    provider: shopops-mock
+    model: shopops-mock

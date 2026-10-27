@@ -1,0 +1,9 @@
+# Lenient: refunds must be eligible; anything above autoLimit is denied outright.
+- insert:
+    - id: shop-policy
+      name: '__ROOT__/plugins/shop-policy/index.js'
+      config:
+        mode: lenient
+        autoLimit: 200
+        dataFile: '__ROOT__/data/shop.json'
+        auditFile: '__ROOT__/.runs/audit.jsonl'
