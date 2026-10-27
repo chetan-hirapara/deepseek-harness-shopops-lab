@@ -10,7 +10,7 @@ A hands-on lab for Session 3. An e-commerce support agent whose **PII masking, r
 ## Quickstart (5 minutes)
 
 ```bash
-git clone <repo-url> shopops-lab && cd shopops-lab
+git clone https://github.com/chetan-hirapara/deepseek-harness-shopops-lab.git && cd shopops-lab
 npm install
 node lab.mjs setup          # generates data/shop.json and runs the checks
 node lab.mjs run "Where is order ORD-10002?"
